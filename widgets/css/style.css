@@ -1,0 +1,9 @@
+.fv-modal .loading {
+    width: 24px;
+    height: 24px;
+    background: url(img/loading.gif) no-repeat;
+}
+
+.fv-modal .modal-footer {
+    margin-top: 15px;
+}
