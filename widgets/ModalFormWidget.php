@@ -51,6 +51,16 @@ class ModalFormWidget extends Widget
     public $header;
 
     /**
+     * @var bool whether or not to show the footer
+     */
+    public $showFooter = true;
+
+    /**
+     * @var array
+     */
+    public $modalOptions = [];
+
+    /**
      * @var array
      */
     private $views = [];
@@ -73,7 +83,10 @@ class ModalFormWidget extends Widget
     {
         // Register the view if asset bundle not previously registered
         if (!isset($this->view->assetBundles[ModalFormAsset::className()])) {
-            $this->views[] = $this->render('modal');
+            $this->views[] = $this->render('modal', [
+                'showFooter' => $this->showFooter,
+                'options' => $this->modalOptions,
+            ]);
             $this->view->registerJs('var fvModalId = "' . $this->modalId . '";', View::POS_HEAD);
             $this->view->registerJs('var fvAjaxSubmit = {};', View::POS_HEAD);
             $this->view->registerJs('var fvCallbacks = {};', View::POS_HEAD);
