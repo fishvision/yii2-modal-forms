@@ -64,17 +64,19 @@ var /**
 
                 // Scripts that haven't yet been loaded need to be added to the end of the body
                 page = jQuery(data);
-                page.filter('script[src]').each(function () {
+                page.filter('script').each(function () {
                     var src = jQuery(this).attr("src");
 
-                    if (existingScripts.indexOf(src) < 0) {
+                    if (!src) {
+                        // If no src supplied, execute the raw JS
+                        formHtml += jQuery(this).prop('outerHTML');
+                    } else if (existingScripts.indexOf(src) < 0) {
                         // Append a random timestamp to the end to force browser to send the second+ request
                         src += (src.indexOf('?') < 0) ? '?' : '&';
                         jQuery.ajax({
                             url: src + (new Date().getTime()),
                             dataType: "script"
                         });
-
                     }
                 });
 
