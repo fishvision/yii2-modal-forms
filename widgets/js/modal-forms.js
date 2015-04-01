@@ -53,7 +53,9 @@ var /**
                     formHtml,
                     page,
                     existingScripts = getPageScriptTags(),
-                    existingCssLinks = getPageCssLinks();
+                    existingCssLinks = getPageCssLinks(),
+                    injections = [],
+                    iterator;
 
                 // Check if form exists
                 if (form.length === 0) {
@@ -62,49 +64,58 @@ var /**
                 }
                 formHtml = form.prop('outerHTML');
 
-                // Scripts that haven't yet been loaded need to be added to the end of the body
-                page = jQuery(data);
-                page.filter('script').each(function () {
-                    var src = jQuery(this).attr("src");
-
-                    if (!src) {
-                        // If no src supplied, execute the raw JS
-                        formHtml += jQuery(this).prop('outerHTML');
-                    } else if (existingScripts.indexOf(src) < 0) {
-                        // Append a random timestamp to the end to force browser to send the second+ request
-                        src += (src.indexOf('?') < 0) ? '?' : '&';
-                        jQuery.ajax({
-                            url: src + (new Date().getTime()),
-                            dataType: "script"
-                        });
-                    }
-                });
-
-                // CSS stylesheets that haven't been added need to be loaded before end of head
-                page.filter('link[rel="stylesheet"]').each(function () {
-                    var href = jQuery(this).attr('href'),
-                        head = jQuery('head');
-
-                    if (existingCssLinks.indexOf(href) < 0) {
-                        // Append the CSS link to the page
-                        if (head.length === 0) {
-                            head = jQuery('body');
-                        }
-
-                        if (head.length === 0) {
-                            head = jQuery(document);
-                        }
-
-                        head.append(jQuery(this).prop('outerHTML'));
-
-                        // Store the link so its not needed to be requested again
-                        existingCssLinks.push(href);
-                    }
-                });
-
                 // Output on to the page
-                jQuery("#" + fvModalId + " .body .form").html(formHtml);
-                jQuery(document).trigger('fvModalLoaded');
+                jQuery("#" + fvModalId + " .body .form").html(formHtml).promise().done(function () {
+                    page = jQuery(data);
+
+                    // CSS stylesheets that haven't been added need to be loaded before end of head
+                    page.filter('link[rel="stylesheet"]').each(function () {
+                        var href = jQuery(this).attr('href'),
+                            head = jQuery('head');
+
+                        if (existingCssLinks.indexOf(href) < 0) {
+                            // Append the CSS link to the page
+                            if (head.length === 0) {
+                                head = jQuery('body');
+                            }
+
+                            if (head.length === 0) {
+                                head = jQuery(document);
+                            }
+
+                            head.append(jQuery(this).prop('outerHTML'));
+
+                            // Store the link so its not needed to be requested again
+                            existingCssLinks.push(href);
+                        }
+                    });
+
+                    // Scripts that haven't yet been loaded need to be added to the end of the body
+                    page.filter('script').each(function () {
+                        var src = jQuery(this).attr("src");
+
+                        if (!src) {
+                            // If no src supplied, execute the raw JS (need to execute after the script tags have been loaded)
+                            injections.push(jQuery(this).prop('outerHTML'));
+
+                        } else if (existingScripts.indexOf(src) < 0) {
+                            // Append a random timestamp to the end to force browser to send the second+ request
+                            src += (src.indexOf('?') < 0) ? '?' : '&';
+                            jQuery.ajax({
+                                url: src + (new Date().getTime()),
+                                dataType: "script"
+                            });
+                        }
+                    });
+
+                    // Execute the injections
+                    for (iterator = 0; iterator < injections.length; iterator += 1) {
+                        eval(injections[iterator]);
+                    }
+
+                    // Output on to the page
+                    jQuery(document).trigger('fvModalLoaded');
+                });
             }
         });
     },
