@@ -1,6 +1,8 @@
 /*globals jQuery,fvModalId,fvAjaxSubmit,fvCallbacks*/
 
-var /**
+var FV_MODAL_FORM_SCRIPTS_LOADED_EVENT = 'fvModalFormScriptsLoaded',
+
+    /**
      * Retrieves the script tags on the page
      * @returns {Array}
      */
@@ -55,6 +57,17 @@ var /**
                     existingScripts = getPageScriptTags(),
                     existingCssLinks = getPageCssLinks(),
                     injections = [],
+                    scriptTags = [],
+                    loadedScripts = 0,
+
+                // Success callback function once scripts are loaded
+                    scriptLoaded = function (tags) {
+                        loadedScripts += 1;
+                        if (loadedScripts === tags.length) {
+                            jQuery(document).trigger(FV_MODAL_FORM_SCRIPTS_LOADED_EVENT);
+                        }
+                    },
+
                     iterator;
 
                 // Check if form exists
@@ -96,22 +109,31 @@ var /**
 
                         if (!src) {
                             // If no src supplied, execute the raw JS (need to execute after the script tags have been loaded)
-                            injections.push(jQuery(this).prop('outerHTML'));
+                            injections.push(jQuery(this).text());
 
                         } else if (existingScripts.indexOf(src) < 0) {
                             // Append a random timestamp to the end to force browser to send the second+ request
                             src += (src.indexOf('?') < 0) ? '?' : '&';
-                            jQuery.ajax({
-                                url: src + (new Date().getTime()),
-                                dataType: "script"
-                            });
+                            scriptTags.push(src);
                         }
                     });
 
-                    // Execute the injections
-                    for (iterator = 0; iterator < injections.length; iterator += 1) {
-                        eval(injections[iterator]);
+                    // Load each script tag
+                    for (iterator = 0; iterator < scriptTags.length; iterator += 1) {
+                        jQuery.ajax({
+                            url: scriptTags[iterator] + (new Date().getTime()),
+                            dataType: "script",
+                            success: scriptLoaded(scriptTags)
+                        });
                     }
+
+                    // Execute the injections once all of the script tags have been loaded
+                    jQuery(document).on(FV_MODAL_FORM_SCRIPTS_LOADED_EVENT, function () {
+                        for (iterator = 0; iterator < injections.length; iterator += 1) {
+                            console.log(injections[iterator]);
+                            eval(injections[iterator]);
+                        }
+                    });
 
                     // Output on to the page
                     jQuery(document).trigger('fvModalLoaded');
