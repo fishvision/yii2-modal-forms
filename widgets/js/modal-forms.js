@@ -130,7 +130,6 @@ var FV_MODAL_FORM_SCRIPTS_LOADED_EVENT = 'fvModalFormScriptsLoaded',
                     // Execute the injections once all of the script tags have been loaded
                     jQuery(document).on(FV_MODAL_FORM_SCRIPTS_LOADED_EVENT, function () {
                         for (iterator = 0; iterator < injections.length; iterator += 1) {
-                            console.log(injections[iterator]);
                             eval(injections[iterator]);
                         }
                     });
