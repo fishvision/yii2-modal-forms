@@ -1,21 +1,25 @@
 {
-    "name": "fishvision/yii2-modal-forms",
-    "description": "Native support for forms within modals for Yii2",
-    "type": "yii2-extension",
-    "keywords": ["yii2","extension"],
-    "license": "MIT",
-    "authors": [
-        {
-            "name": "Alex Berriman",
-            "email": "alexb@fishvision.com"
-        }
-    ],
-    "require": {
-        "yiisoft/yii2": "*"
-    },
-    "autoload": {
-        "psr-4": {
-            "fishvision\\modalforms\\": ""
-        }
+  "name": "fishvision/yii2-modal-forms",
+  "description": "Native support for forms within modals for Yii2",
+  "type": "yii2-extension",
+  "keywords": [
+    "yii2",
+    "extension"
+  ],
+  "license": "MIT",
+  "minimum-stability": "dev",
+  "authors": [
+    {
+      "name": "Alex Berriman",
+      "email": "alexb@fishvision.com"
     }
+  ],
+  "require": {
+    "yiisoft/yii2": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "fishvision\\modalforms\\": ""
+    }
+  }
 }
