@@ -60,10 +60,24 @@ var FV_MODAL_FORM_SCRIPTS_LOADED_EVENT = 'fvModalFormScriptsLoaded',
                     scriptTags = [],
                     loadedScripts = 0,
 
-                // Success callback function once scripts are loaded
-                    scriptLoaded = function (tags) {
+                    /**
+                     * Execute the JS on the page
+                     * @param injections
+                     */
+                    executeInjections = function (injections) {
+                        var iterator;
+                        for (iterator = 0; iterator < injections.length; iterator += 1) {
+                            eval(injections[iterator]);
+                        }
+                    },
+
+                    /**
+                     * Scripts loaded callback
+                     */
+                    scriptLoaded = function () {
                         loadedScripts += 1;
-                        if (loadedScripts === tags.length) {
+                        if (loadedScripts === scriptTags.length) {
+                            executeInjections(injections);
                             jQuery(document).trigger(FV_MODAL_FORM_SCRIPTS_LOADED_EVENT);
                         }
                     },
@@ -120,19 +134,8 @@ var FV_MODAL_FORM_SCRIPTS_LOADED_EVENT = 'fvModalFormScriptsLoaded',
 
                     // Load each script tag
                     for (iterator = 0; iterator < scriptTags.length; iterator += 1) {
-                        jQuery.ajax({
-                            url: scriptTags[iterator] + (new Date().getTime()),
-                            dataType: "script",
-                            success: scriptLoaded(scriptTags)
-                        });
+                        jQuery.getScript(scriptTags[iterator] + (new Date().getTime()), scriptLoaded);
                     }
-
-                    // Execute the injections once all of the script tags have been loaded
-                    jQuery(document).on(FV_MODAL_FORM_SCRIPTS_LOADED_EVENT, function () {
-                        for (iterator = 0; iterator < injections.length; iterator += 1) {
-                            eval(injections[iterator]);
-                        }
-                    });
 
                     // Output on to the page
                     jQuery(document).trigger('fvModalLoaded');
