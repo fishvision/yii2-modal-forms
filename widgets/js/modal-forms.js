@@ -33,24 +33,41 @@ var FV_MODAL_FORM_SCRIPTS_LOADED_EVENT = 'fvModalFormScriptsLoaded',
     },
 
     /**
+     * Fetch the modal group
+     * @param group
+     * @returns {boolean}
+     */
+    getModalId = function(group) {
+        return fvModalId[group] !== undefined ? fvModalId[group] : false;
+    },
+
+    /**
      * Configure the modal form
      *
      * @param title
      * @param url
      * @param formId
+     * @param group
      */
-    modalForm = function (title, url, formId) {
+    modalForm = function (title, url, formId, group) {
         "use strict";
 
+        // Fetch the modal ID
+        var modalId = getModalId(group);
+        if (modalId === false) {
+            console.log('[FVMODAL] Invalid ID');
+            return;
+        }
+
         // Set the modal for loading
-        jQuery("#" + fvModalId + " .body .form").html("");
-        jQuery("#" + fvModalId + " .modal-header span").html(title);
-        jQuery("#" + fvModalId + " .loading").removeClass("hide");
+        jQuery("#" + modalId + " .body .form").html("");
+        jQuery("#" + modalId + " .modal-header span").html(title);
+        jQuery("#" + modalId + " .loading").removeClass("hide");
 
         jQuery.ajax({
             url: url,
             success: function (data) {
-                jQuery("#" + fvModalId + " .body .loading").addClass("hide");
+                jQuery("#" + modalId + " .body .loading").addClass("hide");
                 var form = jQuery(data).find("#" + formId),
                     formHtml,
                     page,
@@ -92,7 +109,7 @@ var FV_MODAL_FORM_SCRIPTS_LOADED_EVENT = 'fvModalFormScriptsLoaded',
                 formHtml = form.prop('outerHTML');
 
                 // Output on to the page
-                jQuery("#" + fvModalId + " .body .form").html(formHtml).promise().done(function () {
+                jQuery("#" + modalId + " .body .form").html(formHtml).promise().done(function () {
                     page = jQuery(data);
 
                     // CSS stylesheets that haven't been added need to be loaded before end of head
@@ -153,7 +170,13 @@ var FV_MODAL_FORM_SCRIPTS_LOADED_EVENT = 'fvModalFormScriptsLoaded',
         var form = jQuery(this),
             id = form.attr("id"),
             action = form.attr("action"),
-            method = form.attr("method");
+            method = form.attr("method"),
+            modalId = getModalId(group);
+
+        if (modalId === false) {
+            console.log('[FVMODAL] Invalid ID');
+            return;
+        }
 
         // Return true if not ajax submit
         if (fvAjaxSubmit === undefined || fvAjaxSubmit[id] === undefined || fvAjaxSubmit[id] !== true) {
@@ -171,7 +194,7 @@ var FV_MODAL_FORM_SCRIPTS_LOADED_EVENT = 'fvModalFormScriptsLoaded',
                 }
 
                 jQuery(document).trigger('onFvModalFormSubmitted', [id, data]);
-                jQuery("#" + fvModalId).modal('hide');
+                jQuery("#" + modalId).modal('hide');
             },
             error: function (data) {
                 if (fvCallbacks && fvCallbacks[id] && typeof fvCallbacks[id].error === 'function') {
@@ -179,7 +202,7 @@ var FV_MODAL_FORM_SCRIPTS_LOADED_EVENT = 'fvModalFormScriptsLoaded',
                     fn(data);
                 }
 
-                jQuery("#" + fvModalId).modal('hide');
+                jQuery("#" + modalId).modal('hide');
             }
         });
 
@@ -191,6 +214,12 @@ var FV_MODAL_FORM_SCRIPTS_LOADED_EVENT = 'fvModalFormScriptsLoaded',
 
     // Forms can trigger the modal complete event to hide
     $(document).on('fvModalComplete', function () {
-        $("#" + fvModalId).modal('hide');
+        var key;
+
+        for (var key in fvModalId) {
+            if (fvModalId.hasOwnProperty(key)) {
+                $("#" + fvModalId[key]).modal('hide');
+            }
+        }
     });
 }(jQuery));

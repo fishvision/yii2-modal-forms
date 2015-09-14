@@ -2,6 +2,7 @@
 
 namespace fishvision\modalforms\widgets;
 
+use fishvision\modalforms\helpers\StaticModalFormHelper;
 use Yii;
 use yii\base\Widget;
 use yii\helpers\ArrayHelper;
@@ -61,11 +62,6 @@ class ModalFormWidget extends Widget
     public $modalOptions = [];
 
     /**
-     * @var array
-     */
-    private $views = [];
-
-    /**
      * @var bool
      */
     public $ajaxSubmit = true;
@@ -73,7 +69,12 @@ class ModalFormWidget extends Widget
     /**
      * @var string
      */
-    private $modalId = 'fv-form-modal';
+    public $modalId = 'fv-form-modal';
+
+    /**
+     * @var array
+     */
+    private $views = [];
 
     /**
      * Initializes the widget.
@@ -81,15 +82,23 @@ class ModalFormWidget extends Widget
      */
     public function init()
     {
-        // Register the view if asset bundle not previously registered
-        if (!isset($this->view->assetBundles[ModalFormAsset::className()])) {
-            $this->views[] = $this->render('modal', [
-                'showFooter' => $this->showFooter,
-                'options' => $this->modalOptions,
-            ]);
-            $this->view->registerJs('var fvModalId = "' . $this->modalId . '";', View::POS_HEAD);
+        // If the first time running, register basic JS
+        if (StaticModalFormHelper::registeredCount() === 0) {
+            $this->view->registerJs('var fvModalId = {};', View::POS_HEAD);
             $this->view->registerJs('var fvAjaxSubmit = {};', View::POS_HEAD);
             $this->view->registerJs('var fvCallbacks = {};', View::POS_HEAD);
+            Yii::$app->view->params['fvModalForms']= [];
+        }
+
+        // Register the view if asset bundle not previously registered
+        if (!StaticModalFormHelper::isRegistered($this->modalId)) {
+            $this->view->registerJs('fvModalId[\'' . $this->modalId . '\'] = "' . $this->modalId . '";', View::POS_HEAD);
+            $this->view->registerJs('fvAjaxSubmit[\'' . $this->modalId . '\'] = {};', View::POS_HEAD);
+            $this->view->registerJs('fvCallbacks[\'' . $this->modalId . '\'] = {};', View::POS_HEAD);
+            Yii::$app->view->params['fvModalForms'][] = $this->render('modal');
+
+            // Mark the group as registered
+            StaticModalFormHelper::register($this->modalId);
         }
 
         // Button - merge user options with static options
@@ -120,7 +129,7 @@ class ModalFormWidget extends Widget
         ]);
 
         // Register the view onclick
-        $options = implode('", "', [$this->header, $this->route, $this->formId]);
+        $options = implode('", "', [$this->header, $this->route, $this->formId, $this->modalId]);
         $this->view->registerJs('jQuery("#' . $this->id . '").on("click", function(e) { modalForm("' . $options . '"); });');
 
 
